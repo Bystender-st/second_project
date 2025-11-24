@@ -1,0 +1,19 @@
+# Python / env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.env
+.env.*
+.vscode/
+.idea/
+*.sqlite3
+dist/
+build/
+*.egg-info/
+.venv/
+
+# Docker
+docker-compose.override.yml
+.env.local
