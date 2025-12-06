@@ -1,17 +1,24 @@
-# src/app/config.py
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+from dotenv import load_dotenv
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Загружаем .env ВРУЧНУЮ — обязательно для pydantic v2
+ENV_PATH = os.path.join(BASE_DIR, "..", ".env")
+load_dotenv(ENV_PATH)
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # НЕ указываем env_file — оно игнорируется в pydantic v2
+    model_config = SettingsConfigDict(env_prefix="")
 
-    # we use the already existing env variable names (from step 1)
     DATABASE_URL: str
     REDIS_URL: str
     MONGO_URL: Optional[str] = None
     SECRET_KEY: str
-    CBR_URL: str = "https://www.cbr-xml-daily.js"
+    CBR_URL: str = "https://www.cbr-xml-daily.ru/daily_json.js"
     CORS_ORIGINS: str = "*"
 
     PAGE_SIZE_DEFAULT: int = 20
