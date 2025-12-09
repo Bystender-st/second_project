@@ -1,13 +1,18 @@
-import aioredis
+from typing import Optional
+import redis.asyncio as redis
+from redis.asyncio import Redis
+
 from app.config import settings
 
-redis = None
+_redis: Optional[Redis] = None
 
 
 async def get_redis():
-    global redis
-    if redis is None:
-        redis = await aioredis.from_url(
-            settings.REDIS_URL, encoding="utf-8", decode_responses=True
+    global _redis
+    if _redis is None:
+        _redis = redis.from_url(
+            settings.REDIS_URL,
+            encoding="utf-8",
+            decode_responses=True,
         )
-    return redis
+    return _redis
