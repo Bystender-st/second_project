@@ -27,6 +27,7 @@ class PackageResponse(BaseModel):
     content_price_usd: float
     delivery_price_rub: Optional[float] = None
     delivery_calculated: bool
+    delivery_status: str
     type: PackageTypeResponse
 
     model_config = {"from_attributes": True}
@@ -38,6 +39,7 @@ class PackageListItem(BaseModel):
     weight_kg: float
     delivery_price_rub: Optional[float]
     delivery_calculated: bool
+    delivery_status: str
     type: PackageTypeResponse
 
     model_config = {"from_attributes": True}
