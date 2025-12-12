@@ -10,12 +10,7 @@ from app.schemas.package import (
     PackageResponse,
     PackageListResponse,
 )
-
-
-def _compute_delivery_status(pkg: Package) -> str:
-    if pkg.delivery_calculated and pkg.delivery_price_rub is not None:
-        return f"{pkg.delivery_price_rub:.2f}"
-    return "Не рассчитано"
+from app.utils.package_presentation import compute_delivery_status
 
 
 async def create_package(
@@ -39,7 +34,7 @@ async def create_package(
     await session.refresh(new_package)
 
     # подмешиваем вычисляемое поле
-    new_package.delivery_status = _compute_delivery_status(new_package)
+    new_package.delivery_status = compute_delivery_status(new_package)
 
     return PackageResponse.model_validate(new_package)
 
@@ -76,7 +71,7 @@ async def list_packages(
 
     # добавляем delivery_status каждому объекту
     for pkg in packages:
-        pkg.delivery_status = _compute_delivery_status(pkg)
+        pkg.delivery_status = compute_delivery_status(pkg)
 
     from app.schemas.package import PackageListItem  # во избежание циклов импорта
 
@@ -106,5 +101,5 @@ async def get_package_by_id(
     if not pkg:
         return None
 
-    pkg.delivery_status = _compute_delivery_status(pkg)
+    pkg.delivery_status = compute_delivery_status(pkg)
     return PackageResponse.model_validate(pkg)

@@ -30,7 +30,7 @@ async def get_usd_rate() -> float:
     except Exception:
         if cached_value is not None:
             return float(cached_value)
-        raise RuntimeError("Не удалось получить курс USD ни из API, ни из кеша")
+        raise RuntimeError("Не удалось получить курс USD ни из API, ни из кеша.")
 
     # 3. Кладём в Redis
     await redis.set(CACHE_KEY, rate, ex=CACHE_TTL)

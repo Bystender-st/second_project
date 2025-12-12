@@ -15,7 +15,8 @@ from app.services.package import (
     get_package_by_id,
 )
 from app.utils.dependencies import get_session_id
-
+from app.services.pricing import calculate_delivery_for_package
+from app.utils.session import get_or_create_session_id
 
 router = APIRouter(tags=["Packages"])
 
@@ -62,6 +63,27 @@ async def get_package(
     pkg = await get_package_by_id(db, session_id, package_id)
     if not pkg:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Package not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Посылка не найдена."
         )
     return pkg
+
+
+@router.post("/packages/{package_id}/calculate", response_model=PackageResponse)
+async def calculate_delivery(
+    package_id: int,
+    session_id: str = Depends(get_or_create_session_id),
+    db=Depends(get_db),
+):
+    result = await calculate_delivery_for_package(
+        db,
+        session_id=session_id,
+        package_id=package_id,
+    )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Посылка не найдена или не принадлежит вашей сессии.",
+        )
+
+    return result

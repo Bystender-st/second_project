@@ -1,6 +1,8 @@
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
+from fastapi import HTTPException, status
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -8,12 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.db.models import Package
 from app.schemas.package import PackageResponse
 from app.services.exchange_rate import get_usd_rate
-
-
-def _compute_delivery_status(pkg: Package) -> str:
-    if pkg.delivery_calculated and pkg.delivery_price_rub is not None:
-        return f"{pkg.delivery_price_rub:.2f}"
-    return "Не рассчитано"
+from app.utils.package_presentation import compute_delivery_status
 
 
 async def calculate_delivery_for_package(
@@ -42,6 +39,12 @@ async def calculate_delivery_for_package(
     if pkg is None:
         return None
 
+    if pkg.delivery_calculated:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Стоимость доставки для этой посылки уже рассчитана.",
+        )
+
     # 2. Получаем курс доллара
     usd_rate = await get_usd_rate()
     usd_rate_dec = Decimal(str(usd_rate))
@@ -64,6 +67,6 @@ async def calculate_delivery_for_package(
     await session.refresh(pkg)
 
     # 5. Добавляем человекочитаемый статус стоимости
-    pkg.delivery_status = _compute_delivery_status(pkg)
+    pkg.delivery_status = compute_delivery_status(pkg)
 
     return PackageResponse.model_validate(pkg)

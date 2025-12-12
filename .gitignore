@@ -13,6 +13,8 @@ dist/
 build/
 *.egg-info/
 .venv/
+.mypy_cache/
+.ruff_cache/
 
 # Docker
 docker-compose.override.yml
