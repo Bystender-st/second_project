@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from app.middleware.session_middleware import SessionMiddleware
 from app.routers.package_types import router as package_types_router
 from app.routers.package import router as packages_router
+from app.routers import debug
 from app.scheduler.runner import init_scheduler
 
 
@@ -22,3 +23,5 @@ app.add_middleware(SessionMiddleware)
 app.include_router(package_types_router)
 
 app.include_router(packages_router)
+
+app.include_router(debug.router)
