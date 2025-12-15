@@ -4,6 +4,8 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+EXCLUDED_PATHS = {"/openapi.json", "/docs", "/redoc"}
+
 
 class ResponseMiddleware(BaseHTTPMiddleware):
     async def dispatch(
@@ -12,6 +14,10 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         call_next: Callable,
     ) -> Response:
         response = await call_next(request)
+
+        # Не трогаем системные эндпоинты FastAPI
+        if request.url.path in EXCLUDED_PATHS:
+            return response
 
         # Не трогаем ответы без тела
         if response.status_code == 204:

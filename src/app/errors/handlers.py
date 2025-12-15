@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette import status
 
+EXCLUDED_PATHS = {"/openapi.json", "/docs", "/redoc"}
+
 logger = logging.getLogger("app.errors")
 
 
@@ -12,6 +14,9 @@ def http_exception_handler(
     request: Request,
     exc: HTTPException,
 ) -> JSONResponse:
+    if request.url.path in EXCLUDED_PATHS:
+        raise exc
+
     logger.warning(
         "HTTP exception",
         extra={
@@ -37,6 +42,9 @@ def validation_exception_handler(
     request: Request,
     exc: RequestValidationError,
 ) -> JSONResponse:
+    if request.url.path in EXCLUDED_PATHS:
+        raise exc
+
     logger.warning(
         "Validation error",
         extra={
@@ -62,6 +70,9 @@ def unhandled_exception_handler(
     request: Request,
     exc: Exception,
 ) -> JSONResponse:
+    if request.url.path in EXCLUDED_PATHS:
+        raise exc
+
     logger.exception(
         "Unhandled exception",
         extra={"path": request.url.path},
