@@ -152,3 +152,42 @@ def test_get_only_not_calculated_packages(client):
 
     for item in body["data"]["items"]:
         assert item["delivery_calculated"] is False
+
+
+def test_create_package_invalid_weight(client):
+    response = client.post(
+        "/packages",
+        json={
+            "name": "Bad package",
+            "weight_kg": -1,
+            "type_id": 1,
+            "content_price_usd": 10,
+        },
+    )
+
+    assert response.status_code == 422
+
+    body = response.json()
+    assert body["success"] is False
+
+
+def test_packages_are_session_scoped(client):
+    client.post(
+        "/packages",
+        json={
+            "name": "Session scoped",
+            "weight_kg": 2,
+            "type_id": 1,
+            "content_price_usd": 100,
+        },
+    )
+
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    other_client = TestClient(app)
+
+    response = other_client.get("/packages")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["total"] == 0
