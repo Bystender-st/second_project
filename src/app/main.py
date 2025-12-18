@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -25,9 +26,16 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler = init_scheduler()
+    scheduler = None
+
+    # В тестах scheduler не запускаем
+    if os.getenv("DISABLE_SCHEDULER") != "1":
+        scheduler = init_scheduler()
+
     yield
-    scheduler.shutdown(wait=False)
+
+    if scheduler:
+        scheduler.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -35,7 +43,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Exception handlers (единый формат ошибок)
+# Exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)

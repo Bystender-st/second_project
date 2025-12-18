@@ -1,9 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class PackageTypeResponse(BaseModel):
     id: int = Field(..., description="ID типа посылки")
     name: str = Field(..., description="Название типа посылки")
 
-    class Config:
-        from_attributes = True  # позволяет строить схему из SQLAlchemy модели
+    model_config = ConfigDict(from_attributes=True)
