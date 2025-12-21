@@ -91,6 +91,7 @@ def client(monkeypatch):
     # отключаем scheduler и redis в тестах
     monkeypatch.setenv("DISABLE_SCHEDULER", "1")
     monkeypatch.setenv("DISABLE_REDIS", "1")
+    monkeypatch.setenv("DISABLE_MONGO", "1")
 
     app.dependency_overrides[get_session] = override_get_session
 

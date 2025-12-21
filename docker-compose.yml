@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   app:
+    build: .
     image: delivery-app:latest
     container_name: delivery_app
     command: >
@@ -19,6 +20,8 @@ services:
       mysql:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
 
   mysql:
@@ -49,5 +52,19 @@ services:
       timeout: 5s
       retries: 5
 
+  mongo:
+    image: mongo:7
+    container_name: delivery_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   mysql_data:
+  mongo_data:

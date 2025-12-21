@@ -3,7 +3,7 @@ from typing import Callable
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 
 EXCLUDED_PATHS = {"/openapi.json", "/docs", "/redoc"}
 
@@ -20,13 +20,17 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         if request.url.path in EXCLUDED_PATHS:
             return response
 
-        # 2. Не трогаем ответы без тела
+        # 2. НЕ трогаем StreamingResponse (Swagger, файлы, SSE и т.д.)
+        if isinstance(response, StreamingResponse):
+            return response
+
+        # 3. Не трогаем ответы без тела
         if response.status_code == 204:
             return response
 
         content_type = response.headers.get("content-type", "")
 
-        # 3. Работаем только с JSON-ответами
+        # 4. Работаем только с JSON
         if "application/json" not in content_type:
             return response
 
@@ -39,7 +43,7 @@ class ResponseMiddleware(BaseHTTPMiddleware):
         except json.JSONDecodeError:
             return response
 
-        # 4. Если это уже error-ответ (success=False) — НЕ ОБОРАЧИВАЕМ
+        # 5. Error-ответы не оборачиваем
         if isinstance(data, dict) and data.get("success") is False:
             new_response = Response(
                 content=json.dumps(data, ensure_ascii=False),
@@ -47,17 +51,16 @@ class ResponseMiddleware(BaseHTTPMiddleware):
                 media_type="application/json",
             )
         else:
-            wrapped = {
-                "success": True,
-                "data": data,
-            }
             new_response = Response(
-                content=json.dumps(wrapped, ensure_ascii=False),
+                content=json.dumps(
+                    {"success": True, "data": data},
+                    ensure_ascii=False,
+                ),
                 status_code=response.status_code,
                 media_type="application/json",
             )
 
-        # 5. Корректно переносим set-cookie (важно для session middleware)
+        # 6. Корректно переносим cookies
         for header, value in response.headers.items():
             if header.lower() == "set-cookie":
                 new_response.headers.append("set-cookie", value)

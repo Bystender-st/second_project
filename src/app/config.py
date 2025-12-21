@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 from dotenv import load_dotenv
 import os
 
@@ -16,7 +15,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     REDIS_URL: str
-    MONGO_URL: Optional[str] = None
+    MONGO_URL: str | None = "mongodb://mongo:27017"
+    MONGO_DB_NAME: str = "delivery_logs"
     SECRET_KEY: str
     CBR_URL: str = "https://www.cbr-xml-daily.ru/daily_json.js"
     CORS_ORIGINS: str = "*"

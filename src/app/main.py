@@ -49,9 +49,9 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 # Middleware
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(SessionMiddleware)
 app.add_middleware(ResponseMiddleware)
+app.add_middleware(SessionMiddleware)
+app.add_middleware(LoggingMiddleware)
 
 # Routers
 app.include_router(package_types_router)
