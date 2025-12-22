@@ -15,10 +15,10 @@ router = APIRouter(
 )
 async def run_delivery_calculation():
     """
-    Manually runs background delivery price calculation
-    for all packages without calculated delivery cost.
+    Запуск ручного расчеты стоимости доставки, в фоновом режиме,
+    для всех посылок, без рассчитанной стоимости доставки.
 
-    Intended for debugging and operational usage.
+    Предназначено для отладки и оперативного использования.
     """
     await process_pending_packages()
     return {

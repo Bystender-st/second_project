@@ -11,6 +11,7 @@ from app.middleware.response_middleware import ResponseMiddleware
 from app.routers.package_types import router as package_types_router
 from app.routers.package import router as packages_router
 from app.routers import debug
+from app.routers.analytics import router as analytics_router
 from app.scheduler.runner import init_scheduler
 from app.errors.handlers import (
     http_exception_handler,
@@ -57,3 +58,4 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(package_types_router)
 app.include_router(packages_router)
 app.include_router(debug.router)
+app.include_router(analytics_router)

@@ -21,7 +21,7 @@ def http_exception_handler(
 def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    # Сводим pydantic-ошибки в человекочитаемую строку (минимально инвазивно)
+    # Сводим pydantic-ошибки в человекочитаемую строку
     msg = "Validation error"
     if exc.errors():
         first = exc.errors()[0]

@@ -10,7 +10,7 @@ load_dotenv(ENV_PATH)
 
 
 class Settings(BaseSettings):
-    # НЕ указываем env_file — оно игнорируется в pydantic v2
+    # env_file не указывается — оно игнорируется в pydantic v2
     model_config = SettingsConfigDict(env_prefix="")
 
     DATABASE_URL: str
