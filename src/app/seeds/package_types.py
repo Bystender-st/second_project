@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from app.db.models import PackageType
-from app.db.base import AsyncSessionLocal  # ваше место сессий
+from app.db.base import AsyncSessionLocal
 
 DEFAULT_PACKAGE_TYPES = [
     {"name": "clothing"},

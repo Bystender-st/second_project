@@ -1,4 +1,3 @@
-# migrations/env.py
 from logging.config import fileConfig
 import asyncio
 from sqlalchemy import pool
