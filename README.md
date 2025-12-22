@@ -12,8 +12,8 @@ Backend-сервис для регистрации международных п
     -Docker Compose
 
  Клонирование репозитория
-    git clone https://github.com/<your-username>/international-delivery.git
-    cd international-delivery
+    git clone https://github.com/Bystender-st/second_project.git
+    cd second_project
 
  Настройка окружения
 
