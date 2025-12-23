@@ -20,5 +20,5 @@ async def process_pending_packages():
             await calculate_delivery_for_package(
                 session=session,
                 session_id=pkg.session_id,  # расчёт привязан к сессии
-                package_id=pkg.id,
+                package_id=int(pkg.id),
             )
