@@ -1,5 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Optional
+from typing import Optional, cast
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -10,6 +10,7 @@ from app.db.models import Package
 from app.schemas.package import PackageResponse
 from app.services.exchange_rate import get_usd_rate
 from app.services.delivery_log import log_delivery_calculation
+from app.utils.package_presentation import compute_delivery_status
 
 
 async def calculate_delivery_for_package(
@@ -17,6 +18,10 @@ async def calculate_delivery_for_package(
     session_id: str,
     package_id: int,
 ) -> Optional[PackageResponse]:
+    """
+    Рассчитывает стоимость доставки для одной посылки текущей сессии.
+    """
+
     query = (
         select(Package)
         .options(joinedload(Package.type))
@@ -28,12 +33,12 @@ async def calculate_delivery_for_package(
     )
 
     result = await session.execute(query)
-    pkg = result.scalars().first()
+    pkg: Package | None = result.scalars().first()
 
     if pkg is None:
         return None
 
-    if bool(pkg.delivery_calculated):
+    if cast(bool, pkg.delivery_calculated):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Стоимость доставки для этой посылки уже рассчитана.",
@@ -50,15 +55,17 @@ async def calculate_delivery_for_package(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
 
-    pkg.delivery_price_rub = delivery_price
-    pkg.delivery_calculated = True
+    pkg.delivery_price_rub = cast(Decimal, delivery_price)
+    pkg.delivery_calculated = cast(bool, True)
 
     await session.commit()
     await session.refresh(pkg)
 
+    pkg.delivery_status = compute_delivery_status(pkg)
+
     try:
         await log_delivery_calculation(
-            package_id=int(pkg.id),
+            package_id=pkg.id,
             session_id=session_id,
             weight_kg=float(pkg.weight_kg),
             type_name=pkg.type.name if pkg.type else "unknown",
