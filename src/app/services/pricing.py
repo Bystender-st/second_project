@@ -10,7 +10,6 @@ from app.db.models import Package
 from app.schemas.package import PackageResponse
 from app.services.exchange_rate import get_usd_rate
 from app.services.delivery_log import log_delivery_calculation
-from app.utils.package_presentation import compute_delivery_status
 
 
 async def calculate_delivery_for_package(
@@ -18,10 +17,6 @@ async def calculate_delivery_for_package(
     session_id: str,
     package_id: int,
 ) -> Optional[PackageResponse]:
-    """
-    Рассчитывает стоимость доставки для одной посылки текущей сессии.
-    """
-
     query = (
         select(Package)
         .options(joinedload(Package.type))
@@ -33,12 +28,12 @@ async def calculate_delivery_for_package(
     )
 
     result = await session.execute(query)
-    pkg: Package | None = result.scalars().first()
+    pkg = result.scalars().first()
 
     if pkg is None:
         return None
 
-    if pkg.delivery_calculated:
+    if bool(pkg.delivery_calculated):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Стоимость доставки для этой посылки уже рассчитана.",
@@ -55,13 +50,11 @@ async def calculate_delivery_for_package(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
 
-    pkg.delivery_price_rub = delivery_price  # type: ignore[assignment]
+    pkg.delivery_price_rub = delivery_price
     pkg.delivery_calculated = True
 
     await session.commit()
     await session.refresh(pkg)
-
-    delivery_status = compute_delivery_status(pkg)
 
     try:
         await log_delivery_calculation(
@@ -76,17 +69,4 @@ async def calculate_delivery_for_package(
     except Exception:
         pass
 
-    return PackageResponse(
-        id=pkg.id,
-        name=pkg.name,
-        weight_kg=pkg.weight_kg,
-        delivery_price_rub=pkg.delivery_price_rub,
-        delivery_calculated=pkg.delivery_calculated,
-        delivery_status=delivery_status,
-        type={
-            "id": pkg.type.id,
-            "name": pkg.type.name,
-        }
-        if pkg.type
-        else None,
-    )
+    return PackageResponse.model_validate(pkg)

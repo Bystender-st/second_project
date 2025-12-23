@@ -9,6 +9,7 @@ from app.schemas.package import (
     PackageCreate,
     PackageResponse,
     PackageListResponse,
+    PackageListItem,
 )
 from app.utils.package_presentation import compute_delivery_status
 
@@ -33,10 +34,9 @@ async def create_package(
     await session.commit()
     await session.refresh(new_package)
 
-    # подмешиваем вычисляемое поле
-    new_package.delivery_status = compute_delivery_status(new_package)
-
-    return PackageResponse.model_validate(new_package)
+    response = PackageResponse.model_validate(new_package)
+    response.delivery_status = compute_delivery_status(new_package)
+    return response
 
 
 async def list_packages(
@@ -59,25 +59,23 @@ async def list_packages(
     if only_calculated is not None:
         base_query = base_query.where(Package.delivery_calculated == only_calculated)
 
-    # считаем total
     count_query = select(func.count()).select_from(base_query.subquery())
-    total = await session.scalar(count_query)
+    total = await session.scalar(count_query) or 0
 
-    # пагинация
     offset = (page - 1) * page_size
     items_query = base_query.order_by(Package.id.desc()).offset(offset).limit(page_size)
     result = await session.execute(items_query)
     packages = result.scalars().all()
 
-    # добавляем delivery_status каждому объекту
+    items: list[PackageListItem] = []
     for pkg in packages:
-        pkg.delivery_status = compute_delivery_status(pkg)
-
-    from app.schemas.package import PackageListItem  # во избежание циклов импорта
+        item = PackageListItem.model_validate(pkg)
+        item.delivery_status = compute_delivery_status(pkg)
+        items.append(item)
 
     return PackageListResponse(
-        items=[PackageListItem.model_validate(p) for p in packages],
-        total=total or 0,
+        items=items,
+        total=total,
         page=page,
         page_size=page_size,
     )
@@ -96,10 +94,12 @@ async def get_package_by_id(
             Package.session_id == session_id,
         )
     )
+
     result = await session.execute(query)
     pkg = result.scalars().first()
     if not pkg:
         return None
 
-    pkg.delivery_status = compute_delivery_status(pkg)
-    return PackageResponse.model_validate(pkg)
+    response = PackageResponse.model_validate(pkg)
+    response.delivery_status = compute_delivery_status(pkg)
+    return response
